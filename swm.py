@@ -157,21 +157,35 @@ def main():
     u = np.zeros(msk.shape).flatten()
     v = np.zeros(msk.shape).flatten()
 
-    for k in xrange(1,1000):
+    for k in xrange(10000):
+        #tic = time.time()
         s = solve(B*s)
+        #print 'step time', time.time() - tic
         print '.',
         if k % 2 == 0: # make plot
             sbig[ikeep] = s
             u[iu] = sbig[iubig]
             v[iv] = sbig[ivbig]
             h[ih] = sbig[ihbig]
-        plt.subplot(211)
-        handle = plt.contourf(h.reshape(msk.shape))
-        plt.subplot(212)
-        V = v.reshape(msk.shape)
-        plt.plot(V[50,:])
-        plt.show(block=False)
-        plt.pause(0.01)
+            V = v.reshape(msk.shape)
+            U = u.reshape(msk.shape)
+            Z = h.reshape(msk.shape)
+            if k == 0:
+                plt.subplot(211)
+                p1 = plt.imshow(h.reshape(msk.shape))
+                plt.subplot(212)
+                p2 = plt.plot(xu,V[51,:]*200,'r')[0]
+                p3 = plt.plot(xu,Z[51,:],'g')[0]
+                plt.ylim(-10, 10)
+                plt.show(block=False)
+            else:
+                #shell()
+                p1.set_data(h.reshape(msk.shape))
+                p2.set_data(xu, V[51,:]*200)
+                p3.set_data(xu, Z[51,:])
+            plt.pause(0.01)
+
+
         # original matlab plot commands follow
         #figure(1)
         #hold on
