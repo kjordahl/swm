@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Wed Apr  4 07:36:54 EDT 2012>
+Time-stamp: <Wed Apr  4 19:00:32 EDT 2012>
 """
 
 import time
@@ -19,16 +19,21 @@ from IPython.frontend.terminal.embed import InteractiveShellEmbed
 # Parameters
 nx = 101; # number of grid points in the x-direction
 ny = 101; # number of grid points in the y-direction
-Lx = 2000e3; #(m) East-West domain size
-Ly = 2000e3; #(m) North-South domain size
+Rd = 100e3;  # (m)  Rossby Radius 
+Lx = 12*Rd; #(m) East-West domain size
+Ly = 12*Rd; #(m) North-South domain size
 Omega = 2*pi/(24*60**2); # (1/s) rotational frequency of the Earth
 phi0 = pi*30/180     # (rad) reference latitude
 f0 = 2*Omega*sin(phi0); # (1/s) Coriolis parameter
 a = 6400e3;             # (m) Earth's radius
-beta = 0*(2*Omega/a)*cos(phi0); # (1/(ms))
-Rd = 100e3;  # (m)  Rossby Radius 
+beta = (2*Omega/a)*cos(phi0); # (1/(ms))
 H = 600;     # (m)  reference thickness
-gp = (f0*Rd)**2/H; # (m/s^2) reduced gravity
+if f0 == 0:
+    # use equitorial Rd=sqrt(gH)/sqrt(beta)
+    # so Rd^2=gh/beta so g=Rd^2*beta/H
+    gp = Rd**2 * beta/H                 # (m/s^2) reduced gravity
+else:
+    gp = (f0*Rd)**2/H; # (m/s^2) reduced gravity
 Ah = 1e4;    # (m^2/s) viscosity
 cg = sqrt(gp*H);
 
@@ -70,10 +75,10 @@ def main():
     iw = np.roll(ii, 1, 1)
     iin = np.roll(ii, -1, 0)            # "in" is a reserved word
     iis = np.roll(ii, 1, 0)             # so is "is"
-    IE = I[ie.flatten('F'),:10201]
-    IW = I[iw.flatten('F'),:10201]
-    IN = I[iin.flatten('F'),:10201]
-    IS = I[iis.flatten('F'),:10201]
+    IE = I[ie.flatten('F'),:n]
+    IW = I[iw.flatten('F'),:n]
+    IN = I[iin.flatten('F'),:n]
+    IS = I[iis.flatten('F'),:n]
 
     DX = (1/dx)*(IE-I)
     DY = (1/dy)*(IN-I)
