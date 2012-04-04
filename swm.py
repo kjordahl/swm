@@ -1,17 +1,20 @@
 #!/usr/bin/env python
+"""
+Reduced Gravity Shallow Water Model
+based Matlab code by: Francois Primeau UC Irvine 2011
+
+Kelsey Jordahl
+kjordahl@enthought.com
+Time-stamp: <Wed Apr  4 07:36:54 EDT 2012>
+"""
 
 import time
 import numpy as np
+from numpy import pi, sin, cos, sqrt, exp
 from scipy import sparse
 from scipy.sparse import linalg
 import matplotlib.pyplot as plt
 from IPython.frontend.terminal.embed import InteractiveShellEmbed
-
-pi = np.pi
-sin = np.sin
-cos = np.cos
-sqrt = np.sqrt
-exp = np.exp
 
 # Parameters
 nx = 101; # number of grid points in the x-direction
