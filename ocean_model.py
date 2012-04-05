@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Wed Apr  4 20:47:21 EDT 2012>
+Time-stamp: <Wed Apr  4 22:26:42 EDT 2012>
 """
 
 import time
@@ -177,10 +177,12 @@ class SWM(HasTraits):
         tic = time.time()
         self.solve = linalg.factorized(A)
         print 'Elapsed time: ', time.time() - tic
-
         self.h = np.zeros(self.msk.shape).flatten()
         self.u = np.zeros(self.msk.shape).flatten()
         self.v = np.zeros(self.msk.shape).flatten()
+        self.V = self.v.reshape(self.msk.shape)
+        self.U = self.u.reshape(self.msk.shape)
+        self.Z = self.h.reshape(self.msk.shape)
 
     def time_step(self):
         """
@@ -200,23 +202,20 @@ def main():
 
     swm = SWM()
 
+    plt.subplot(211)
+    p1 = plt.imshow(swm.h0)
+    plt.subplot(212)
+    p2 = plt.plot(swm.xu,swm.V[50,:]*200,'r')[0]
+    p3 = plt.plot(swm.xu,swm.Z[50,:],'g')[0]
+    plt.ylim(-10, 10)
+    plt.show(block=False)
+
     for k in xrange(10000):
         swm.time_step()
-        if k % 2 == 0: # make plot
-            if k == 0:
-                plt.subplot(211)
-                p1 = plt.imshow(swm.Z)
-                plt.subplot(212)
-                p2 = plt.plot(swm.xu,swm.V[51,:]*200,'r')[0]
-                p3 = plt.plot(swm.xu,swm.Z[51,:],'g')[0]
-                plt.ylim(-10, 10)
-                plt.show(block=False)
-            else:
-                #shell()
-                p1.set_data(swm.Z)
-                p2.set_data(swm.xu, swm.V[51,:]*200)
-                p3.set_data(swm.xu, swm.Z[51,:])
-            plt.pause(0.01)
+        p1.set_data(swm.Z)
+        p2.set_data(swm.xu, swm.V[50,:]*200)
+        p3.set_data(swm.xu, swm.Z[50,:])
+        plt.pause(0.001)
 
 if __name__ == '__main__':
     main()
