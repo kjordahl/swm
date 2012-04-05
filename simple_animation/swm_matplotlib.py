@@ -5,22 +5,22 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Thu Apr  5 19:23:48 EDT 2012>
+Time-stamp: <Wed Apr  4 22:26:42 EDT 2012>
 """
 
 import time
-import threading
 import numpy as np
 from numpy import pi, sin, cos, sqrt, exp
-from traits.api import (HasTraits, Int, Float, Instance, Bool, Enum, Str,
+from traits.api import (HasTraits, Int, Float, Instance, Bool, Enum,
                         Range, on_trait_change)
 from chaco.api import Plot, ArrayPlotData
 from scipy import sparse
 from scipy.sparse import linalg
 import matplotlib.pyplot as plt
+from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
 
-class ShallowWaterModel(HasTraits):
+class SWM(HasTraits):
     """
     Shallow Water Model
     """
@@ -36,10 +36,6 @@ class ShallowWaterModel(HasTraits):
     lat = Int(30)           # (degrees) Reference latitude
     Rd = Int(100000)        # (m) Rossby Radius
     H = Int(600)            # (m) reference thickness
-    # model
-    running = Bool(False)
-    delay = Float(0.01)    # run loop delay (seconds)
-    run_text = Str("Run")
 
     def __init__(self):
         self.update_params()
@@ -48,21 +44,13 @@ class ShallowWaterModel(HasTraits):
         self.operators()
         self.initialize_matrix()
 
-    def set_plot(self, plot=None):
-        self.plot = plot
-
     def initial_conditions(self):
         """Geostrophic adjustment problem
         initial condition
         """
         self.h0 = 10*exp(-((self.Xh-self.Lx/2)**2+(self.Yh-self.Ly/2)**2)/(self.Rd)**2)
-        self.Z = self.h0
         self.u0 = np.zeros(self.Xv.shape)
         self.v0 = np.zeros(self.Yv.shape)
-
-    def _running_changed(self):
-        if self.running:
-            self.start()
 
     def d0(self, M):
         m = M.flatten()
@@ -197,7 +185,7 @@ class ShallowWaterModel(HasTraits):
         self.Z = self.h.reshape(self.msk.shape)
 
     def time_step(self):
-        """Update state vector and height and velocity fields at each time step
+        """
         """
         self.s = self.solve(self.B * self.s)
         self.sbig[self.ikeep] = self.s
@@ -208,75 +196,26 @@ class ShallowWaterModel(HasTraits):
         self.U = self.u.reshape(self.msk.shape)
         self.Z = self.h.reshape(self.msk.shape)
 
-    def matplotlib_update(self):
-        """This should be in a separate plot object, but here for now
-        until migrated to enaml/chaco
-        """
-        print 'update plot'
-        self.p1.set_data(self.Z)
-        self.p2.set_data(self.xu, self.V[50,:]*200)
-        self.p3.set_data(self.xu, self.Z[50,:])
-        print 'about to pause'
-        print plt.gca()
-        #plt.pause(0.001)
-        print 'done updating'
-
-    def start(self):
-        """Start a thread to run the time steps"""
-        self.running = True
-        thread = threading.Thread(target=run_loop, args=(self,))
-        thread.start()
-
-    def stop(self):
-        self.running = False
-
-
-class OceanPlot(HasTraits):
-    plot = Instance(Plot)
-    plotdata = Instance(ArrayPlotData, ())
-
-    def __init__(self, model):
-        super(OceanPlot, self).__init__(model=model)
-
-    def _plot_default(self):
-        plot = Plot(self.plotdata)
-        return plot
-
-    def clear_plot(self):
-        print 'clearing plot'
-        for k in self.plot.plots.keys():
-            self.plot.delplot(k)
-        self.plot.datasources.clear()
-        self.plot.request_redraw()
-
-    def get_plot_component(self):
-        self.plotdata.set_data("imagedata", self.model.Z)
-        renderer = self.plot.img_plot("imagedata")[0]
-        return self.plot
-
-
-def run_loop(model):
-    tic = time.time()
-    while model.running:
-        #print time.time() - tic
-        tic = time.time()
-        model.time_step()
-        #model.plot.plot.request_redraw()
-        model.plot.plotdata.set_data("imagedata", model.Z)
-        time.sleep(model.delay)
-
 
 def main():
-    swm = ShallowWaterModel()
-    plot = OceanPlot(swm)
-    swm.set_plot(plot)
+    shell = InteractiveShellEmbed()
 
-    import enaml
-    with enaml.imports():
-        from ocean_view import OceanView
-    view = OceanView(model=swm, plot=plot)
+    swm = SWM()
 
-    view.show()
+    plt.subplot(211)
+    p1 = plt.imshow(swm.h0)
+    plt.subplot(212)
+    p2 = plt.plot(swm.xu,swm.V[50,:]*200,'r')[0]
+    p3 = plt.plot(swm.xu,swm.Z[50,:],'g')[0]
+    plt.ylim(-10, 10)
+    plt.show(block=False)
+
+    for k in xrange(10000):
+        swm.time_step()
+        p1.set_data(swm.Z)
+        p2.set_data(swm.xu, swm.V[50,:]*200)
+        p3.set_data(swm.xu, swm.Z[50,:])
+        plt.pause(0.001)
 
 if __name__ == '__main__':
     main()
