@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Thu Apr  5 19:23:48 EDT 2012>
+Time-stamp: <Thu Apr  5 19:24:51 EDT 2012>
 """
 
 import time
@@ -63,6 +63,9 @@ class ShallowWaterModel(HasTraits):
     def _running_changed(self):
         if self.running:
             self.start()
+            self.run_text = 'Stop'
+        else:
+            self.run_text = 'Run'
 
     def d0(self, M):
         m = M.flatten()
