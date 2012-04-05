@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Thu Apr  5 19:24:51 EDT 2012>
+Time-stamp: <Thu Apr  5 19:37:32 EDT 2012>
 """
 
 import time
@@ -17,7 +17,6 @@ from traits.api import (HasTraits, Int, Float, Instance, Bool, Enum, Str,
 from chaco.api import Plot, ArrayPlotData
 from scipy import sparse
 from scipy.sparse import linalg
-import matplotlib.pyplot as plt
 
 
 class ShallowWaterModel(HasTraits):
@@ -210,19 +209,6 @@ class ShallowWaterModel(HasTraits):
         self.V = self.v.reshape(self.msk.shape)
         self.U = self.u.reshape(self.msk.shape)
         self.Z = self.h.reshape(self.msk.shape)
-
-    def matplotlib_update(self):
-        """This should be in a separate plot object, but here for now
-        until migrated to enaml/chaco
-        """
-        print 'update plot'
-        self.p1.set_data(self.Z)
-        self.p2.set_data(self.xu, self.V[50,:]*200)
-        self.p3.set_data(self.xu, self.Z[50,:])
-        print 'about to pause'
-        print plt.gca()
-        #plt.pause(0.001)
-        print 'done updating'
 
     def start(self):
         """Start a thread to run the time steps"""
