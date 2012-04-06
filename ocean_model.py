@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri Apr  6 08:34:53 EDT 2012>
+Time-stamp: <Fri Apr  6 08:38:02 EDT 2012>
 """
 
 import time
@@ -35,7 +35,7 @@ class ShallowWaterModel(HasTraits):
     Ly = Float(1200e3)      # (m) North-South domain size
     Xbump = Range(low=-1.0, high=1.0, value=1.0)
     Lbump = Range(low=0.1, high=10.0, value=1.0)        # size of bump (relative to Rd)
-    lat = Int(30)           # (degrees) Reference latitude
+    lat = Range(low=-90, high=90, value=30)           # (degrees) Reference latitude
     H = Int(600)            # (m) reference thickness
     # model
     running = Bool(False)
