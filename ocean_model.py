@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Thu Apr  5 20:37:42 EDT 2012>
+Time-stamp: <Fri Apr  6 06:35:30 EDT 2012>
 """
 
 import time
@@ -34,7 +34,7 @@ class ShallowWaterModel(HasTraits):
     Lx = Float(1200e3)      # (m) East-West domain size
     Ly = Float(1200e3)      # (m) North-South domain size
     Lbump = Float(1)        # size of bump (relative to Rd)
-    lat = Int(30)           # (degrees) Reference latitude
+    lat = Int(-30)           # (degrees) Reference latitude
     H = Int(600)            # (m) reference thickness
     # model
     running = Bool(False)
@@ -55,7 +55,7 @@ class ShallowWaterModel(HasTraits):
         """Geostrophic adjustment problem
         initial condition
         """
-        Xbump = self.Lx / 2
+        Xbump = self.Lx
         Ybump = self.Ly / 2
         self.h0 = exp(-((self.Xh-Xbump)**2+(self.Yh-Ybump)**2)/(self.Lbump*self.Rd)**2)
         self.Z = self.h0
@@ -76,12 +76,16 @@ class ShallowWaterModel(HasTraits):
 
     def update_params(self):
         """update calculated parameters"""
+        dx = self.Lx / self.nx
+        dy = self.Ly / self.ny
         self.phi0 = pi*self.lat/180            # reference latitude (radians)
         self.f0 = 2*self.Omega*sin(self.phi0)  # (1/s) Coriolis parameter
         self.beta = (2*self.Omega/self.a)*cos(self.phi0) # (1/(ms))
         if self.f0 == 0:
-            self.gp = self.Rd**2 * self.beta / H # (m/s^2) reduced gravity
+            self.Ah = 0.01 * dx**2 / 8.64e4
+            self.gp = self.Rd**2 * self.beta / self.H # (m/s^2) reduced gravity
         else:
+            self.Ah = 0.01 * dx**2 / (2*pi/self.f0)
             self.gp = (self.f0 * self.Rd)**2 / self.H # (m/s^2) reduced gravity
         self.cg = sqrt(self.gp*self.H)
 
@@ -118,10 +122,10 @@ class ShallowWaterModel(HasTraits):
         iw = np.roll(ii, 1, 1)
         iin = np.roll(ii, -1, 0)            # "in" is a reserved word
         iis = np.roll(ii, 1, 0)             # so is "is"
-        IE = I[ie.flatten('F'),:10201]
-        IW = I[iw.flatten('F'),:10201]
-        IN = I[iin.flatten('F'),:10201]
-        IS = I[iis.flatten('F'),:10201]
+        IE = I[ie.flatten('F'),:n]
+        IW = I[iw.flatten('F'),:n]
+        IN = I[iin.flatten('F'),:n]
+        IS = I[iis.flatten('F'),:n]
 
         DX = (1/self.dx)*(IE-I)
         DY = (1/self.dy)*(IN-I)
@@ -212,6 +216,7 @@ class ShallowWaterModel(HasTraits):
         self.V = self.v.reshape(self.msk.shape)
         self.U = self.u.reshape(self.msk.shape)
         self.Z = self.h.reshape(self.msk.shape)
+        self.Z[self.msk==0] = np.nan
 
     def start(self):
         """Start a thread to run the time steps"""
