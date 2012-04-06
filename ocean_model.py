@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri Apr  6 08:12:31 EDT 2012>
+Time-stamp: <Fri Apr  6 08:30:34 EDT 2012>
 """
 
 import time
@@ -59,7 +59,8 @@ class ShallowWaterModel(HasTraits):
         """
         Xbump = (self.Xbump + 1.0) * self.Ly / 2
         Ybump = self.Ly / 2
-        self.h0 = exp(-((self.Xh-Xbump)**2+(self.Yh-Ybump)**2)/(self.Lbump*self.Rd)**2)
+        self.h0 = exp(-((self.Xh - Xbump)**2 + (self.Yh - Ybump)**2) /
+                      (self.Lbump * self.Rd)**2)
         self.Z = self.h0
         self.u0 = np.zeros(self.Xv.shape)
         self.v0 = np.zeros(self.Yv.shape)
@@ -78,16 +79,16 @@ class ShallowWaterModel(HasTraits):
 
     def d0(self, M):
         m = M.flatten()
-        n = len(m);
-        return sparse.spdiags(m,0,n,n);
+        n = len(m)
+        return sparse.spdiags(m, 0, n, n)
 
     def update_params(self):
         """update calculated parameters"""
         dx = self.Lx / self.nx
         dy = self.Ly / self.ny
-        self.phi0 = pi*self.lat/180            # reference latitude (radians)
-        self.f0 = 2*self.Omega*sin(self.phi0)  # (1/s) Coriolis parameter
-        self.beta = (2*self.Omega/self.a)*cos(self.phi0) # (1/(ms))
+        self.phi0 = pi * self.lat / 180            # reference latitude (radians)
+        self.f0 = 2 * self.Omega * sin(self.phi0)  # (1/s) Coriolis parameter
+        self.beta = (2 * self.Omega / self.a) * cos(self.phi0) # (1/(ms))
         if self.f0 == 0:
             self.Ah = 0.01 * dx**2 / 8.64e4
             self.gp = self.Rd**2 * self.beta / self.H # (m/s^2) reduced gravity
@@ -110,7 +111,7 @@ class ShallowWaterModel(HasTraits):
         # mesh for the v-points
         xv = xh
         yv = np.arange(dy, self.Ly + dy, dy)
-        self.Xv, self.Yv = np.meshgrid(xv,yv);
+        self.Xv, self.Yv = np.meshgrid(xv,yv)
         # Land-sea mask defined on the h-points
         # 1 = ocean point
         # 0 = land point
@@ -121,51 +122,71 @@ class ShallowWaterModel(HasTraits):
         self.dy = dy
 
     def operators(self):
-        # Differential operators
-        n = self.nx*self.ny
+        """Define differential operators
+        """
+        n = self.nx * self.ny
         I = sparse.eye(n, n).tocsc()
         ii = np.arange(n).reshape(self.nx, self.ny, order='F')
         ie = np.roll(ii, -1, 1)
         iw = np.roll(ii, 1, 1)
         iin = np.roll(ii, -1, 0)            # "in" is a reserved word
         iis = np.roll(ii, 1, 0)             # so is "is"
-        IE = I[ie.flatten('F'),:n]
-        IW = I[iw.flatten('F'),:n]
-        IN = I[iin.flatten('F'),:n]
-        IS = I[iis.flatten('F'),:n]
+        IE = I[ie.flatten('F'), :n]
+        IW = I[iw.flatten('F'), :n]
+        IN = I[iin.flatten('F'), :n]
+        IS = I[iis.flatten('F'), :n]
 
-        DX = (1/self.dx)*(IE-I)
-        DY = (1/self.dy)*(IN-I)
+        DX = (1 / self.dx) * (IE - I)
+        DY = (1 / self.dy) * (IN - I)
         GRAD = sparse.hstack([DX, DY])
 
-        DIV = (1/(self.dx*self.dy))*sparse.hstack([I*self.dy-IW*self.dy, I*self.dx-IS*self.dx])
-        hDIV = (1/(self.dx*self.dy))*sparse.hstack([self.dy*(I-IW)*self.d0(self.msk)*self.d0(IE*self.msk.flatten()),self.dx*(I-IS)*self.d0(self.msk)*self.d0(IN*self.msk.flatten())])
+        DIV = ((1 / (self.dx * self.dy)) *
+               sparse.hstack([I * self.dy - IW * self.dy,
+                              I * self.dx - IS * self.dx]))
+        hDIV = ((1 / (self.dx * self.dy)) *
+                sparse.hstack([self.dy * (I - IW) * self.d0(self.msk) *
+                               self.d0(IE * self.msk.flatten()),
+                               self.dx * (I - IS) *
+                               self.d0(self.msk) * self.d0(IN * self.msk.flatten())]))
         # GRAD for the case of no slip boundary conditions
         # DEL2 for the v points
         # GRAD that assumes that v is zero on the boundary
-        DX0 = self.d0(self.msk)*self.d0(IE*self.msk.flatten())*DX+self.d0(self.msk)*self.d0(1-IE*self.msk.flatten())*((1/self.dx)*(-2*I))+self.d0(1-self.msk)*self.d0(IE*self.msk.flatten())*((1/self.dx)*(2*IE))
+        DX0 = (self.d0(self.msk) * self.d0(IE * self.msk.flatten()) * DX +
+               self.d0(self.msk) * self.d0(1 - IE * self.msk.flatten()) *
+               ((1 / self.dx) * (-2 * I)) + self.d0(1 - self.msk) *
+               self.d0(IE * self.msk.flatten()) * ((1 / self.dx) * (2 * IE)))
         DY0 = DY
         GRADv = sparse.vstack([DX0, DY0])
-        DEL2v = DIV*GRADv
+        DEL2v = DIV * GRADv
         # DEL2 for the u ponts
         # GRAD that assumes that u is zero on the boundary
         DX0 = DX
-        DY0 = self.d0(self.msk)*self.d0(IN*self.msk.flatten())*DY+self.d0(self.msk)*self.d0(1-IN*self.msk.flatten())*((1/self.dy)*(-2*I))+self.d0(1-self.msk)*self.d0(IN*self.msk.flatten())*((1/self.dy)*(2*IN))
+        DY0 = (self.d0(self.msk) * self.d0(IN * self.msk.flatten()) * DY +
+               self.d0(self.msk) * self.d0(1 - IN * self.msk.flatten()) *
+               ((1 / self.dy) * (-2 * I)) + self.d0(1 - self.msk) *
+               self.d0(IN * self.msk.flatten()) * ((1 / self.dy) * (2 * IN)))
         GRADu = sparse.vstack([DX0, DY0])
-        DEL2u = DIV*GRADu
+        DEL2u = DIV * GRADu
         # Averaging operators that zero out the velocities through the boundaries
-        uAv = 0.25*(I+IE+IS+IS*IE)*self.d0(self.msk)*self.d0(IN*self.msk.flatten())
-        vAu = 0.25*(I+IN+IW+IN*IW)*self.d0(self.msk)*self.d0(IE*self.msk.flatten())
+        II = 0.25 * (I + IE + IS + IS * IE)
+        uAv = II * self.d0(self.msk) * self.d0(IN * self.msk.flatten())
+        vAu = II * self.d0(self.msk) * self.d0(IE * self.msk.flatten())
         # State vector
-        self.sbig = np.hstack([self.u0.flatten(), self.v0.flatten(), self.h0.flatten()])
-
+        self.sbig = np.hstack([self.u0.flatten(),
+                               self.v0.flatten(),
+                               self.h0.flatten()])
         fu = self.f0 + self.beta * self.Yu
         fv = self.f0 + self.beta * self.Yv
 
         # Linear swm operator
-        self.L = sparse.vstack([sparse.hstack([-self.Ah*DEL2u, -self.d0(fu)*uAv, self.gp*DX]),
-                           sparse.hstack([self.d0(fv)*vAu, -self.Ah*DEL2v, self.gp*DY]),
-            sparse.hstack([self.H*hDIV, sparse.csc_matrix((n,n))])]).tocsc()
+        self.L = sparse.vstack([sparse.hstack([-self.Ah * DEL2u,
+                                               -self.d0(fu) * uAv,
+                                               self.gp * DX]),
+                                sparse.hstack([self.d0(fv) * vAu,
+                                               -self.Ah * DEL2v,
+                                               self.gp * DY]),
+                                sparse.hstack([self.H * hDIV,
+                                               sparse.csc_matrix((n, n))])]).tocsc()
         self.IE = IE
         self.IN = IN
 
@@ -174,8 +195,10 @@ class ShallowWaterModel(HasTraits):
         Pre-factor the matrix for efficiency in the time loop
         """
         n = self.nx * self.ny
-        ukeep = self.msk.flatten()*self.IE*self.msk.flatten() # keep only pnts where u not 0 
-        vkeep = self.msk.flatten()*self.IN*self.msk.flatten() # keep only pnts where v not 0
+        # keep only points where u is not 0
+        ukeep = self.msk.flatten() * self.IE * self.msk.flatten()
+        # keep only points where v is not 0
+        vkeep = self.msk.flatten() * self.IN * self.msk.flatten()
         hkeep = self.msk.flatten()
         keep = np.hstack([ukeep, vkeep, hkeep])
         ikeep = np.nonzero(keep)[0]
@@ -188,18 +211,23 @@ class ShallowWaterModel(HasTraits):
         self.iu = np.nonzero(ukeep)
         self.iv = np.nonzero(vkeep)
         # indices of variables inside the big s vector
-        self.iubig = np.nonzero(np.hstack([ukeep, np.zeros(vkeep.shape), np.zeros(hkeep.shape)]))
-        self.ivbig = np.nonzero(np.hstack([np.zeros(ukeep.shape), vkeep, np.zeros(hkeep.shape)]))
-        self.ihbig = np.nonzero(np.hstack([np.zeros(ukeep.shape), np.zeros(vkeep.shape), hkeep]))
-
+        self.iubig = np.nonzero(np.hstack([ukeep,
+                                           np.zeros(vkeep.shape),
+                                           np.zeros(hkeep.shape)]))
+        self.ivbig = np.nonzero(np.hstack([np.zeros(ukeep.shape),
+                                           vkeep,
+                                           np.zeros(hkeep.shape)]))
+        self.ihbig = np.nonzero(np.hstack([np.zeros(ukeep.shape),
+                                           np.zeros(vkeep.shape),
+                                           hkeep]))
         dt = 0.5 * self.dx / self.cg
         I = sparse.eye(3*n, 3*n).tocsc()
-        A = I + (dt/2) * self.L
-        B = I - (dt/2) * self.L
-        A = A[ikeep,:]
-        A = A[:,ikeep]                  # does this get used?
-        B = B[ikeep,:]
-        self.B = B[:,ikeep]
+        A = I + (dt / 2) * self.L
+        B = I - (dt / 2) * self.L
+        A = A[ikeep, :]
+        A = A[:, ikeep]                  # does this get used?
+        B = B[ikeep, :]
+        self.B = B[:, ikeep]
 
         print 'Factoring the big matrix...',
         tic = time.time()
