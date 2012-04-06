@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri Apr  6 08:42:03 EDT 2012>
+Time-stamp: <Fri Apr  6 17:45:58 EDT 2012>
 """
 
 import time
@@ -44,9 +44,9 @@ class ShallowWaterModel(HasTraits):
 
     def __init__(self):
         self.update_params()
-        self.Z = np.zeros((self.nx, self.ny))
-        #self.setup_mesh()
-        #self.initial_conditions()
+        #self.Z = np.zeros((self.nx, self.ny))
+        self.setup_mesh()
+        self.initial_conditions()
         #self.operators()
         #self.initialize_matrix()
 
@@ -64,6 +64,16 @@ class ShallowWaterModel(HasTraits):
         self.Z = self.h0
         self.u0 = np.zeros(self.Xv.shape)
         self.v0 = np.zeros(self.Yv.shape)
+
+    def _Lbump_changed(self):
+        self.setup_mesh()
+        self.initial_conditions()
+        self.plot.update_plotdata()
+
+    def _Xbump_changed(self):
+        self.setup_mesh()
+        self.initial_conditions()
+        self.plot.update_plotdata()
 
     def _running_changed(self):
         if self.running:
@@ -273,6 +283,9 @@ class OceanPlot(HasTraits):
     def _plot_default(self):
         plot = Plot(self.plotdata)
         return plot
+
+    def update_plotdata(self):
+        self.plotdata.set_data("imagedata", self.model.Z)
 
     def clear_plot(self):
         print 'clearing plot'
