@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Thu Apr  5 19:37:32 EDT 2012>
+Time-stamp: <Thu Apr  5 20:37:42 EDT 2012>
 """
 
 import time
@@ -30,10 +30,11 @@ class ShallowWaterModel(HasTraits):
     # Parameters
     nx = Int(101)           # number of grid points in the x-direction
     ny = Int(101)           # number of grid points in the y-direction
-    Lx = Float(2000e3)      # (m) East-West domain size
-    Ly = Float(2000e3)      # (m) North-South domain size
+    Rd = Float(100e3)       # (m) Rossby Radius
+    Lx = Float(1200e3)      # (m) East-West domain size
+    Ly = Float(1200e3)      # (m) North-South domain size
+    Lbump = Float(1)        # size of bump (relative to Rd)
     lat = Int(30)           # (degrees) Reference latitude
-    Rd = Int(100000)        # (m) Rossby Radius
     H = Int(600)            # (m) reference thickness
     # model
     running = Bool(False)
@@ -54,7 +55,9 @@ class ShallowWaterModel(HasTraits):
         """Geostrophic adjustment problem
         initial condition
         """
-        self.h0 = 10*exp(-((self.Xh-self.Lx/2)**2+(self.Yh-self.Ly/2)**2)/(self.Rd)**2)
+        Xbump = self.Lx / 2
+        Ybump = self.Ly / 2
+        self.h0 = exp(-((self.Xh-Xbump)**2+(self.Yh-Ybump)**2)/(self.Lbump*self.Rd)**2)
         self.Z = self.h0
         self.u0 = np.zeros(self.Xv.shape)
         self.v0 = np.zeros(self.Yv.shape)
@@ -250,7 +253,6 @@ def run_loop(model):
         #print time.time() - tic
         tic = time.time()
         model.time_step()
-        #model.plot.plot.request_redraw()
         model.plot.plotdata.set_data("imagedata", model.Z)
         time.sleep(model.delay)
 
