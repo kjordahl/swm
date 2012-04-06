@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri Apr  6 06:35:30 EDT 2012>
+Time-stamp: <Fri Apr  6 08:12:31 EDT 2012>
 """
 
 import time
@@ -33,20 +33,22 @@ class ShallowWaterModel(HasTraits):
     Rd = Float(100e3)       # (m) Rossby Radius
     Lx = Float(1200e3)      # (m) East-West domain size
     Ly = Float(1200e3)      # (m) North-South domain size
-    Lbump = Float(1)        # size of bump (relative to Rd)
+    Xbump = Range(low=-1.0, high=1.0, value=0.0)
+    Lbump = Range(low=0.1, high=10.0, value=1.0)        # size of bump (relative to Rd)
     lat = Int(-30)           # (degrees) Reference latitude
     H = Int(600)            # (m) reference thickness
     # model
     running = Bool(False)
     delay = Float(0.01)    # run loop delay (seconds)
-    run_text = Str("Run")
+    run_text = Str("Start")
 
     def __init__(self):
         self.update_params()
-        self.setup_mesh()
-        self.initial_conditions()
-        self.operators()
-        self.initialize_matrix()
+        self.Z = np.zeros((self.nx, self.ny))
+        #self.setup_mesh()
+        #self.initial_conditions()
+        #self.operators()
+        #self.initialize_matrix()
 
     def set_plot(self, plot=None):
         self.plot = plot
@@ -55,7 +57,7 @@ class ShallowWaterModel(HasTraits):
         """Geostrophic adjustment problem
         initial condition
         """
-        Xbump = self.Lx
+        Xbump = (self.Xbump + 1.0) * self.Ly / 2
         Ybump = self.Ly / 2
         self.h0 = exp(-((self.Xh-Xbump)**2+(self.Yh-Ybump)**2)/(self.Lbump*self.Rd)**2)
         self.Z = self.h0
@@ -64,10 +66,15 @@ class ShallowWaterModel(HasTraits):
 
     def _running_changed(self):
         if self.running:
+            self.update_params()
+            self.setup_mesh()
+            self.initial_conditions()
+            self.operators()
+            self.initialize_matrix()
             self.start()
             self.run_text = 'Stop'
         else:
-            self.run_text = 'Run'
+            self.run_text = 'Restart'
 
     def d0(self, M):
         m = M.flatten()

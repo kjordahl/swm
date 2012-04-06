@@ -19,6 +19,18 @@ OceanView(MainWindow):
             IntField:
                 id: lat
                 value := model.lat
+            Label:
+                text << "Size of initial bump (*Rs):  %6.2f" % model.Lbump
+            FloatSlider:
+                minimum = 0.1
+                maximum = 10.0
+                value := model.Lbump
+            Label:
+                text << "Location of initial bump:  %6.2f" % model.Xbump
+            FloatSlider:
+                minimum = -1.0
+                maximum = 1.0
+                value := model.Xbump
             ToggleButton:
                 text << model.run_text
                 checked := model.running
