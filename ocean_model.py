@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri Apr  6 08:38:02 EDT 2012>
+Time-stamp: <Fri Apr  6 08:42:03 EDT 2012>
 """
 
 import time
@@ -14,7 +14,7 @@ import numpy as np
 from numpy import pi, sin, cos, sqrt, exp
 from traits.api import (HasTraits, Int, Float, Instance, Bool, Enum, Str,
                         Range, on_trait_change)
-from chaco.api import Plot, ArrayPlotData
+from chaco.api import Plot, ArrayPlotData, TransformColorMapper, jet
 from scipy import sparse
 from scipy.sparse import linalg
 
@@ -283,7 +283,8 @@ class OceanPlot(HasTraits):
 
     def get_plot_component(self):
         self.plotdata.set_data("imagedata", self.model.Z)
-        renderer = self.plot.img_plot("imagedata")[0]
+        tcm = TransformColorMapper.from_color_map(jet)
+        renderer = self.plot.img_plot("imagedata", colormap=tcm)[0]
         return self.plot
 
 
