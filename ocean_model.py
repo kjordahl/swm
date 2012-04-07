@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Sat Apr  7 08:09:31 EDT 2012>
+Time-stamp: <Sat Apr  7 15:53:43 EDT 2012>
 """
 
 import time
@@ -63,6 +63,7 @@ class ShallowWaterModel(HasTraits):
         self.h0 = self.L0 * exp(-((self.Xh - Xbump)**2 + (self.Yh - Ybump)**2) /
                       (self.Lbump * self.Rd)**2)
         self.Z = self.h0
+        self.Z[self.msk==0] = np.nan
         self.u0 = np.zeros(self.Xv.shape)
         self.v0 = np.zeros(self.Yv.shape)
 
