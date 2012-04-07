@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Sat Apr  7 15:53:43 EDT 2012>
+Time-stamp: <Sat Apr  7 16:01:32 EDT 2012>
 """
 
 import time
@@ -184,9 +184,10 @@ class ShallowWaterModel(HasTraits):
         GRADu = sparse.vstack([DX0, DY0])
         DEL2u = DIV * GRADu
         # Averaging operators that zero out the velocities through the boundaries
-        II = 0.25 * (I + IE + IS + IS * IE)
-        uAv = II * self.d0(self.msk) * self.d0(IN * self.msk.flatten())
-        vAu = II * self.d0(self.msk) * self.d0(IE * self.msk.flatten())
+        Ise = 0.25 * (I + IE + IS + IS * IE)
+        Inw = 0.25 * (I + IN + IW + IN * IW)
+        uAv = Ise * self.d0(self.msk) * self.d0(IN * self.msk.flatten())
+        vAu = Inw * self.d0(self.msk) * self.d0(IE * self.msk.flatten())
         # State vector
         self.sbig = np.hstack([self.u0.flatten(),
                                self.v0.flatten(),
