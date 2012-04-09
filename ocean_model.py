@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Sat Apr  7 16:01:32 EDT 2012>
+Time-stamp: <Mon Apr  9 08:40:27 EDT 2012>
 """
 
 import time
@@ -26,7 +26,8 @@ class ShallowWaterModel(HasTraits):
     # constants
     a = Float(6370e3)               # (m) Earth's radius
     Omega = Float(2*pi/(24*60**2))  # (1/s) rotational frequency of the Earth
-    Ah = Float(1e4)         # (m^2/s) viscosity
+    Ah = Float(1e4)         # (m**2/s) viscosity
+    rho0 = Float(1000) # (kg/m**3) density
     # Parameters
     nx = Int(101)           # number of grid points in the x-direction
     ny = Int(101)           # number of grid points in the y-direction
@@ -38,6 +39,8 @@ class ShallowWaterModel(HasTraits):
     L0 = Float(100)                                             # height of bump
     lat = Range(low=-90, high=90, value=30)           # (degrees) Reference latitude
     H = Int(600)            # (m) reference thickness
+    wind_x = Float(0)
+    wind_y = Float(0)
     # model
     running = Bool(False)
     delay = Float(0.01)    # run loop delay (seconds)
@@ -245,6 +248,7 @@ class ShallowWaterModel(HasTraits):
         A = A[:, ikeep]                  # does this get used?
         B = B[ikeep, :]
         self.B = B[:, ikeep]
+        self.dt = dt
 
         print 'Factoring the big matrix...',
         tic = time.time()
@@ -257,10 +261,24 @@ class ShallowWaterModel(HasTraits):
         self.U = self.u.reshape(self.msk.shape)
         self.Z = self.h.reshape(self.msk.shape)
 
+    def body_forces(self):
+        """Update body forces from wind stress vector"""
+        wind_speed = sqrt(self.wind_x ** 2 + self.wind_y ** 2)
+        b = np.zeros(self.Xh.shape)          # bouyancy term
+        tau = 1.4331e-4 * wind_speed ** 3
+        theta = np.arctan2(self.wind_y, self.wind_x)
+        tau_x = tau * cos(theta) * np.ones(self.Xu.shape)
+        tau_y = tau * sin(theta) * np.ones(self.Yu.shape)
+        F = np.hstack([tau_x.flatten() / (self.rho0 * self.H),
+                          tau_y.flatten() / (self.rho0 * self.H),
+                          b.flatten()])
+        return F[self.ikeep]
+
     def time_step(self):
         """Update state vector and height and velocity fields at each time step
         """
-        self.s = self.solve(self.B * self.s)
+        F = self.body_forces()
+        self.s = self.solve(self.B * self.s + self.dt * F)
         self.sbig[self.ikeep] = self.s
         self.u[self.iu] = self.sbig[self.iubig]
         self.v[self.iv] = self.sbig[self.ivbig]
