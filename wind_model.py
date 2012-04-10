@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Tue Apr 10 08:44:50 EDT 2012>
+Time-stamp: <Tue Apr 10 10:42:40 EDT 2012>
 """
 
 from scipy.io.netcdf import netcdf_file
@@ -25,6 +25,7 @@ class WindDrivenModel(ShallowWaterModel):
         self.Lx = 600e3
         self.Ly = 600e3
         self.lat = 43                   # Latitude of Lake Superior
+        self.H = 150
         super(WindDrivenModel, self).__init__()
 
     def set_mask(self):
