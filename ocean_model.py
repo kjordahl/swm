@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Mon Apr  9 18:17:07 EDT 2012>
+Time-stamp: <Tue Apr 10 08:30:13 EDT 2012>
 """
 
 import time
@@ -73,12 +73,14 @@ class ShallowWaterModel(HasTraits):
     def _Lbump_changed(self):
         self.setup_mesh()
         self.initial_conditions()
-        self.plot.update_plotdata()
+        if hasattr(self, 'plot'):
+            self.plot.update_plotdata()
 
     def _Xbump_changed(self):
         self.setup_mesh()
         self.initial_conditions()
-        self.plot.update_plotdata()
+        if hasattr(self, 'plot'):
+            self.plot.update_plotdata()
 
     def _running_changed(self):
         if self.running:
@@ -126,19 +128,24 @@ class ShallowWaterModel(HasTraits):
         # mesh for the v-points
         xv = xh
         yv = np.arange(dy, self.Ly + dy, dy)
+        self.set_mask()
         self.Xv, self.Yv = np.meshgrid(xv,yv)
-        # Land-sea mask defined on the h-points
-        # 1 = ocean point
-        # 0 = land point
+        self.dx = dx
+        self.dy = dy
+        self.xh = xh
+        self.yh = yh
+
+    def set_mask(self):
+        """Land-sea mask defined on the h-points
+        1 = ocean point
+        0 = land point
+        """
         self.msk = np.ones((self.ny, self.nx))
         self.msk[:,-1] = 0
         self.msk[-1,:] = 0
         #self.msk[:,0] = 0
         #self.msk[0,:] = 0
-        self.dx = dx
-        self.dy = dy
-        self.xh = xh
-        self.yh = yh
+
 
     def operators(self):
         """Define differential operators

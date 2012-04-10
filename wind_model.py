@@ -5,19 +5,31 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Mon Apr  9 18:17:23 EDT 2012>
+Time-stamp: <Tue Apr 10 08:31:42 EDT 2012>
 """
 
+from scipy.io.netcdf import netcdf_file
 from ocean_model import ShallowWaterModel, OceanPlot
+from traits.api import Int
 
 class WindDrivenModel(ShallowWaterModel):
     """Class for wind driven model
 
-    Just set the initial condition to flat."""
+    Set flat initial conditions on Lake Superior
+    """
 
     def __init__(self):
+        self.nx = 151
+        self.ny = 151
         self.Lbump = 0.0
+        self.Lx = 600e3
+        self.Ly = 600e3
         super(WindDrivenModel, self).__init__()
+
+    def set_mask(self):
+        n = netcdf_file('superior_mask.grd', 'r')
+        z = n.variables['z']
+        self.msk = z.data
 
 
 def main():
