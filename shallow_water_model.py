@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Wed Apr 11 20:31:09 EDT 2012>
+Time-stamp: <Thu Apr 12 16:41:15 EDT 2012>
 """
 
 import time
@@ -45,7 +45,7 @@ class ShallowWaterModel(HasTraits):
     mask_choices = ['rectangular', 'periodic', 'east-west channel', 'north-south channel']
     mask_shape = Enum(mask_choices)
     running = Bool(False)
-    delay = Float(0.01)                 # run loop delay (seconds)
+    delay = Float(0.0)                 # run loop delay (seconds)
     run_text = Str("Start")
     t = Float(0)                        # run time (seconds)
 
@@ -73,6 +73,7 @@ class ShallowWaterModel(HasTraits):
         self.Z = self.h0
         self.u0 = np.zeros(self.Xv.shape)
         self.v0 = np.zeros(self.Yv.shape)
+        self.t = 0
 
     def _running_changed(self):
         if self.running:
@@ -101,7 +102,7 @@ class ShallowWaterModel(HasTraits):
 
     def setup_mesh(self):
         dx = self.dx
-        dy = self.dx
+        dy = self.dy
         # mesh for the h-points
         xh = np.arange(dx/2, self.Lx, dx)
         yh = np.arange(dy/2, self.Ly, dy)
