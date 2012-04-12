@@ -15,7 +15,11 @@ SimpleView(MainWindow):
             id: controls
             title = "controls"
             Label:
-                text = "Controls"
+                text = "Boundaries"
+            ComboBox:
+                id: mask
+                items = model.mask_choices
+                value := model.mask_shape
             ToggleButton:
                 text << model.run_text
                 checked := model.running

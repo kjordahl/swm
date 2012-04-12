@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Wed Apr 11 20:12:36 EDT 2012>
+Time-stamp: <Wed Apr 11 20:31:09 EDT 2012>
 """
 
 import time
@@ -42,6 +42,8 @@ class ShallowWaterModel(HasTraits):
     f0 = Float(0)
     beta = Float(0)
     # model
+    mask_choices = ['rectangular', 'periodic', 'east-west channel', 'north-south channel']
+    mask_shape = Enum(mask_choices)
     running = Bool(False)
     delay = Float(0.01)                 # run loop delay (seconds)
     run_text = Str("Start")
@@ -63,8 +65,8 @@ class ShallowWaterModel(HasTraits):
         initial condition
         """
         #self.h0 = np.zeros(self.msk.shape)
-        Xbump = self.Ly / 2
-        Ybump = self.Ly / 2
+        Xbump = self.Ly / 4
+        Ybump = self.Ly / 4
         Lbump = 100.0
         self.h0 = 10 * exp(-((self.Xh - Xbump)**2 + (self.Yh - Ybump)**2) /
                       (Lbump)**2)
@@ -122,10 +124,15 @@ class ShallowWaterModel(HasTraits):
         0 = land point
         """
         self.msk = np.ones((self.ny, self.nx))
-        self.msk[:,-1] = 0
-        self.msk[-1,:] = 0
-        #self.msk[:,0] = 0
-        #self.msk[0,:] = 0
+        if self.mask_shape == 'rectangular':
+            self.msk[:,-1] = 0
+            self.msk[-1,:] = 0
+        if self.mask_shape == 'east-west channel':
+            self.msk[-1,:] = 0
+        if self.mask_shape == 'north-south channel':
+            self.msk[:,-1] = 0
+        if self.mask_shape == 'periodic':
+            pass
 
 
     def operators(self):
