@@ -1,0 +1,26 @@
+from enaml.stdlib.fields import IntField
+
+SimpleView(MainWindow):
+    attr model
+    attr plot
+    title = "Shallow Water Model"
+    Container:
+        constraints = [
+            hbox(plot_window, controls),
+            align('top', plot_window, controls),
+            plot_window.height >= 600,
+            plot_window.width >= 600,
+        ]
+        GroupBox:
+            id: controls
+            title = "controls"
+            Label:
+                text = "Controls"
+            ToggleButton:
+                text << model.run_text
+                checked := model.running
+            Label:
+                text << '%6.1f s' % model.t
+        EnableCanvas:
+            id: plot_window
+            component = plot.get_plot_component()
