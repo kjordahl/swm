@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Thu Apr 12 16:41:15 EDT 2012>
+Time-stamp: <Fri Apr 13 08:09:43 EDT 2012>
 """
 
 import time
@@ -26,7 +26,7 @@ class ShallowWaterModel(HasTraits):
     # constants
     a = Float(6370e3)               # (m) Earth's radius
     Omega = Float(2*pi/(24*60**2))  # (1/s) rotational frequency of the Earth
-    Ah = Float(1e4)                 # (m**2/s) viscosity
+    Ah = Float(1e5)                 # (m**2/s) eddy viscosity
     rho0 = Float(1000)              # (kg/m**3) density
     g = Float(9.81)                 # (m/s**2) acceleration of gravity
     # Parameters
