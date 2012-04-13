@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri Apr 13 15:26:30 EDT 2012>
+Time-stamp: <Fri Apr 13 18:29:34 EDT 2012>
 """
 
 import time
@@ -212,9 +212,9 @@ class ShallowWaterModel(HasTraits):
         """
         n = self.nx * self.ny
         # keep only points where u is not 0
-        ukeep = self.msk.flatten() * self.IE * self.msk.flatten()
+        ukeep = self.msk.flatten() * (self.IE * self.msk.flatten())
         # keep only points where v is not 0
-        vkeep = self.msk.flatten() * self.IN * self.msk.flatten()
+        vkeep = self.msk.flatten() * (self.IN * self.msk.flatten())
         hkeep = self.msk.flatten()
         keep = np.hstack([ukeep, vkeep, hkeep])
         ikeep = np.nonzero(keep)[0]

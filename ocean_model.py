@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Wed Apr 11 20:11:41 EDT 2012>
+Time-stamp: <Fri Apr 13 18:26:20 EDT 2012>
 """
 
 import time
