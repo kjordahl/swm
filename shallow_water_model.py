@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri Apr 13 08:09:43 EDT 2012>
+Time-stamp: <Fri Apr 13 15:26:30 EDT 2012>
 """
 
 import time
@@ -65,9 +65,9 @@ class ShallowWaterModel(HasTraits):
         initial condition
         """
         #self.h0 = np.zeros(self.msk.shape)
-        Xbump = self.Ly / 4
+        Xbump = self.Lx / 4
         Ybump = self.Ly / 4
-        Lbump = 100.0
+        Lbump = 1000.0
         self.h0 = 10 * exp(-((self.Xh - Xbump)**2 + (self.Yh - Ybump)**2) /
                       (Lbump)**2)
         self.Z = self.h0
@@ -104,18 +104,18 @@ class ShallowWaterModel(HasTraits):
         dx = self.dx
         dy = self.dy
         # mesh for the h-points
-        xh = np.arange(dx/2, self.Lx, dx)
-        yh = np.arange(dy/2, self.Ly, dy)
+        xh = np.arange(dx / 2, self.Lx, dx)
+        yh = np.arange(dy / 2, self.Ly, dy)
         self.Xh, self.Yh = np.meshgrid(xh, yh)
         # mesh for the u-points
-        self.xu = np.arange(dx, self.Lx + dx, dx)
-        self.yu = yh
-        self.Xu, self.Yu = np.meshgrid(self.xu, self.yu)
+        xu = np.arange(dx, self.Lx + dx, dx)
+        yu = yh
+        self.Xu, self.Yu = np.meshgrid(xu, yu)
         # mesh for the v-points
         xv = xh
         yv = np.arange(dy, self.Ly + dy, dy)
         self.set_mask()
-        self.Xv, self.Yv = np.meshgrid(xv,yv)
+        self.Xv, self.Yv = np.meshgrid(xv, yv)
         self.xh = xh
         self.yh = yh
 
@@ -166,21 +166,21 @@ class ShallowWaterModel(HasTraits):
         # GRAD for the case of no slip boundary conditions
         # DEL2 for the v points
         # GRAD that assumes that v is zero on the boundary
-        DX0 = (self.d0(self.msk) * self.d0(IE * self.msk.flatten()) * DX +
+        DXv = (self.d0(self.msk) * self.d0(IE * self.msk.flatten()) * DX +
                self.d0(self.msk) * self.d0(1 - IE * self.msk.flatten()) *
                ((1 / self.dx) * (-2 * I)) + self.d0(1 - self.msk) *
                self.d0(IE * self.msk.flatten()) * ((1 / self.dx) * (2 * IE)))
-        DY0 = DY
-        GRADv = sparse.vstack([DX0, DY0])
+        DYv = DY
+        GRADv = sparse.vstack([DXv, DYv])
         DEL2v = DIV * GRADv
         # DEL2 for the u ponts
         # GRAD that assumes that u is zero on the boundary
-        DX0 = DX
-        DY0 = (self.d0(self.msk) * self.d0(IN * self.msk.flatten()) * DY +
+        DXu = DX
+        DYu = (self.d0(self.msk) * self.d0(IN * self.msk.flatten()) * DY +
                self.d0(self.msk) * self.d0(1 - IN * self.msk.flatten()) *
                ((1 / self.dy) * (-2 * I)) + self.d0(1 - self.msk) *
                self.d0(IN * self.msk.flatten()) * ((1 / self.dy) * (2 * IN)))
-        GRADu = sparse.vstack([DX0, DY0])
+        GRADu = sparse.vstack([DXu, DYu])
         DEL2u = DIV * GRADu
         # Averaging operators that zero out the velocities through the boundaries
         Ise = 0.25 * (I + IE + IS + IS * IE)
