@@ -1,5 +1,5 @@
 from traits.api import HasTraits, Instance
-from chaco.api import Plot, ArrayPlotData, TransformColorMapper, PlotAxis, jet
+from chaco.api import Plot, ArrayPlotData, TransformColorMapper, LinearMapper, PlotAxis, jet
 
 
 class ImagePlot(HasTraits):
@@ -23,17 +23,19 @@ class ImagePlot(HasTraits):
         for k in self.plot.plots.keys():
             self.plot.delplot(k)
         self.plot.datasources.clear()
-        self.plot.request_redraw()
+        self.get_plot_component()
 
     def get_plot_component(self):
         xbounds = self.model.xh[0] / 1000, self.model.xh[-1] / 1000
         ybounds = self.model.yh[0] / 1000, self.model.yh[-1] / 1000
         self.plotdata.set_data("imagedata", self.model.Z)
-        tcm = TransformColorMapper.from_color_map(jet)
+        #self.plot.x_mapper.stretch_data = False
+        #self.plot.y_mapper.stretch_data = False
+        cmap = TransformColorMapper.from_color_map(jet)
         renderer = self.plot.img_plot("imagedata",
                                       xbounds = xbounds,
                                       ybounds = ybounds,
-                                      colormap=tcm)[0]
+                                      colormap=cmap)[0]
         left = PlotAxis(orientation='left',
                         title='km',
                         mapper=self.plot.value_mapper,

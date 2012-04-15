@@ -5,18 +5,19 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri Apr 13 18:29:34 EDT 2012>
+Time-stamp: <Sun Apr 15 15:25:40 EDT 2012>
 """
 
 import time
 import threading
 import numpy as np
 from numpy import pi, sin, cos, sqrt, exp
-from traits.api import (HasTraits, Int, Float, Instance, Bool, Enum, Str,
-                        Range, on_trait_change)
+from traits.api import (HasTraits, Int, Float, Bool, Enum, Str,
+                        List, Range)
 from chaco.api import Plot, ArrayPlotData, TransformColorMapper, jet
 from scipy import sparse
 from scipy.sparse import linalg
+from scipy.io.netcdf import netcdf_file
 from image_plot import ImagePlot
 
 class ShallowWaterModel(HasTraits):
@@ -42,8 +43,8 @@ class ShallowWaterModel(HasTraits):
     f0 = Float(0)
     beta = Float(0)
     # model
-    mask_choices = ['rectangular', 'periodic', 'east-west channel', 'north-south channel']
-    mask_shape = Enum(mask_choices)
+    mask_list = List(Str)
+    mask_shape = Enum(values='mask_list')
     running = Bool(False)
     delay = Float(0.0)                 # run loop delay (seconds)
     run_text = Str("Start")
@@ -60,6 +61,14 @@ class ShallowWaterModel(HasTraits):
     def set_plot(self, plot=None):
         self.plot = plot
 
+    def _mask_list_default(self):
+        return ['rectangular',
+                'periodic',
+                'east-west channel',
+                'north-south channel',
+                'Lake Superior',
+                'Gulf of Mexico']
+
     def initial_conditions(self):
         """Geostrophic adjustment problem
         initial condition
@@ -74,6 +83,12 @@ class ShallowWaterModel(HasTraits):
         self.u0 = np.zeros(self.Xv.shape)
         self.v0 = np.zeros(self.Yv.shape)
         self.t = 0
+
+    def _mask_shape_changed(self):
+            self.update_params()
+            self.setup_mesh()
+            self.initial_conditions()
+            self.plot.clear_plot()
 
     def _running_changed(self):
         if self.running:
@@ -101,6 +116,7 @@ class ShallowWaterModel(HasTraits):
         self.cg = sqrt(self.gp * self.H)
 
     def setup_mesh(self):
+        self.set_mask()
         dx = self.dx
         dy = self.dy
         # mesh for the h-points
@@ -114,7 +130,6 @@ class ShallowWaterModel(HasTraits):
         # mesh for the v-points
         xv = xh
         yv = np.arange(dy, self.Ly + dy, dy)
-        self.set_mask()
         self.Xv, self.Yv = np.meshgrid(xv, yv)
         self.xh = xh
         self.yh = yh
@@ -128,12 +143,32 @@ class ShallowWaterModel(HasTraits):
         if self.mask_shape == 'rectangular':
             self.msk[:,-1] = 0
             self.msk[-1,:] = 0
-        if self.mask_shape == 'east-west channel':
+        elif self.mask_shape == 'east-west channel':
             self.msk[-1,:] = 0
-        if self.mask_shape == 'north-south channel':
+        elif self.mask_shape == 'north-south channel':
             self.msk[:,-1] = 0
-        if self.mask_shape == 'periodic':
+        elif self.mask_shape == 'periodic':
             pass
+        elif self.mask_shape == 'Lake Superior':
+            self.nx = 151
+            self.ny = 151
+            self.Lx = 600e3
+            self.Ly = 600e3
+            self.lat = 43                   # Latitude of Lake Superior
+            self.H = 150
+            n = netcdf_file('superior_mask.grd', 'r')
+            z = n.variables['z']
+            self.msk = z.data
+        elif self.mask_shape == 'Gulf of Mexico':
+            self.nx = 201
+            self.ny = 131
+            self.Lx = 2000e3
+            self.Ly = 1300e3
+            self.lat = 25
+            self.H = 1600
+            n = netcdf_file('gulf_mask.grd', 'r')
+            z = n.variables['z']
+            self.msk = z.data
 
 
     def operators(self):

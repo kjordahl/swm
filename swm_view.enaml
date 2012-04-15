@@ -18,7 +18,7 @@ SimpleView(MainWindow):
                 text = "Boundaries"
             ComboBox:
                 id: mask
-                items = model.mask_choices
+                items = model.mask_list
                 value := model.mask_shape
             ToggleButton:
                 text << model.run_text

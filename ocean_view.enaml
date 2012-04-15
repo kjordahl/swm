@@ -15,6 +15,12 @@ OceanView(MainWindow):
             id: controls
             title = "controls"
             Label:
+                text = "Boundaries"
+            ComboBox:
+                id: mask
+                items = model.mask_list
+                value := model.mask_shape
+            Label:
                 text = "Latitude"
             IntField:
                 id: lat

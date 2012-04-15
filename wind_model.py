@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Wed Apr 11 10:52:50 EDT 2012>
+Time-stamp: <Sun Apr 15 15:35:37 EDT 2012>
 """
 
 from scipy.io.netcdf import netcdf_file
@@ -20,19 +20,9 @@ class WindDrivenModel(OceanModel):
     """
 
     def __init__(self):
-        self.nx = 151
-        self.ny = 151
-        self.Lbump = 0.0
-        self.Lx = 600e3
-        self.Ly = 600e3
-        self.lat = 43                   # Latitude of Lake Superior
-        self.H = 150
+        self.mask_shape = 'Lake Superior'
         super(WindDrivenModel, self).__init__()
-
-    def set_mask(self):
-        n = netcdf_file('superior_mask.grd', 'r')
-        z = n.variables['z']
-        self.msk = z.data
+        self.Lbump = 0.0
 
 
 def main():
