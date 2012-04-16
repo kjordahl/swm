@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Mon Apr 16 18:26:18 EDT 2012>
+Time-stamp: <Mon Apr 16 18:40:44 EDT 2012>
 """
 
 import time
@@ -43,15 +43,15 @@ class OceanModel(ShallowWaterModel):
         self.Ybump = self.Ly / 2
         super(OceanModel, self).__init__()
 
-
     def initial_conditions(self):
         """Geostrophic adjustment problem
         initial condition
         """
         super(OceanModel, self).initial_conditions()
         if self.Lbump * self.Rd > 0:
-            self.h0 = self.L0 * exp(-((self.Xh - self.Xbump)**2 + (self.Yh - self.Ybump)**2) /
-            (self.Lbump * self.Rd)**2)
+            self.h0 = self.L0 * exp(-((self.Xh - self.Xbump)**2 +
+                                      (self.Yh - self.Ybump)**2) /
+                                (self.Lbump * self.Rd)**2)
         else:
             self.h0 = np.zeros(self.msk.shape)
         self.Z = self.h0
@@ -91,10 +91,8 @@ class OceanModel(ShallowWaterModel):
 def run_loop(model):
     tic = time.time()
     while model.running:
-        #print time.time() - tic
-        tic = time.time()
         model.time_step()
-        model.plot.plotdata.set_data("imagedata", model.Z)
+        model.plot.update_plotdata()
         time.sleep(model.delay)
 
 
