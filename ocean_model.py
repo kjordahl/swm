@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri Apr 13 18:26:20 EDT 2012>
+Time-stamp: <Mon Apr 16 08:39:33 EDT 2012>
 """
 
 import time
@@ -30,7 +30,8 @@ class OceanModel(ShallowWaterModel):
     Rd = Float(100e3)       # (m) Rossby Radius
     Lx = Float(1200e3)      # (m) East-West domain size
     Ly = Float(1200e3)      # (m) North-South domain size
-    Xbump = Range(low=-1.0, high=1.0, value=1.0)
+    Xbump = Float
+    Ybump = Float
     Lbump = Range(low=0.0, high=10.0, value=1.0)  # size of bump (relative to Rd)
     L0 = Float(100)                               # height of bump
     lat = Range(low=-90, high=90, value=30)       # (degrees) Reference latitude
@@ -38,16 +39,17 @@ class OceanModel(ShallowWaterModel):
     wind_x = Float(0)
 
     def __init__(self):
+        self.Xbump = self.Lx
+        self.Ybump = self.Ly / 2
         super(OceanModel, self).__init__()
+
 
     def initial_conditions(self):
         """Geostrophic adjustment problem
         initial condition
         """
         super(OceanModel, self).initial_conditions()
-        Xbump = (self.Xbump + 1.0) * self.Ly / 2
-        Ybump = self.Ly / 2
-        self.h0 = self.L0 * exp(-((self.Xh - Xbump)**2 + (self.Yh - Ybump)**2) /
+        self.h0 = self.L0 * exp(-((self.Xh - self.Xbump)**2 + (self.Yh - self.Ybump)**2) /
                       (self.Lbump * self.Rd)**2)
         self.Z = self.h0
         self.Z[self.msk==0] = np.nan

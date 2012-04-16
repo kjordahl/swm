@@ -32,10 +32,10 @@ OceanView(MainWindow):
                 maximum = 10.0
                 value := model.Lbump
             Label:
-                text << "Location of initial bump:  %6.2f" % model.Xbump
+                text << "Location of initial bump:  %6d km" % int(model.Xbump / 1000)
             FloatSlider:
-                minimum = -1.0
-                maximum = 1.0
+                minimum = 0
+                maximum << model.Lx
                 value := model.Xbump
             ToggleButton:
                 text << model.run_text
