@@ -1,0 +1,27 @@
+from enaml.stdlib.fields import IntField
+
+StormView(MainWindow):
+    attr model
+    attr plot
+    title = "Storm Surge Model"
+    Container:
+        constraints = [
+            hbox(plot_window, controls),
+            align('top', plot_window, controls),
+            plot_window.height >= 600,
+            plot_window.width >= 600,
+        ]
+        GroupBox:
+            id: controls
+            title = "controls"
+            Label:
+                text = "Latitude"
+            IntField:
+                id: lat
+                value := model.lat
+            ToggleButton:
+                text << model.run_text
+                checked := model.running
+        EnableCanvas:
+            id: plot_window
+            component = plot.get_plot_component()
