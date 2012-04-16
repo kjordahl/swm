@@ -42,7 +42,7 @@ class ImagePlot(HasTraits):
                         component=self.plot)
         bottom = PlotAxis(orientation='bottom',
                         title='km',
-                        mapper=self.plot.value_mapper,
+                        mapper=self.plot.index_mapper,
                         component=self.plot)
         self.plot.underlays.append(left)
         self.plot.underlays.append(bottom)
