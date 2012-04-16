@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Mon Apr 16 08:39:33 EDT 2012>
+Time-stamp: <Mon Apr 16 18:26:18 EDT 2012>
 """
 
 import time
@@ -49,8 +49,11 @@ class OceanModel(ShallowWaterModel):
         initial condition
         """
         super(OceanModel, self).initial_conditions()
-        self.h0 = self.L0 * exp(-((self.Xh - self.Xbump)**2 + (self.Yh - self.Ybump)**2) /
-                      (self.Lbump * self.Rd)**2)
+        if self.Lbump * self.Rd > 0:
+            self.h0 = self.L0 * exp(-((self.Xh - self.Xbump)**2 + (self.Yh - self.Ybump)**2) /
+            (self.Lbump * self.Rd)**2)
+        else:
+            self.h0 = np.zeros(self.msk.shape)
         self.Z = self.h0
         self.Z[self.msk==0] = np.nan
 
@@ -65,17 +68,20 @@ class OceanModel(ShallowWaterModel):
         else:
             self.Ah = 0.01 * self.dx**2 / (2*pi/self.f0)
             self.gp = (self.f0 * self.Rd)**2 / self.H # (m/s^2) reduced gravity
-        print 'gp', self.gp
         self.cg = sqrt(self.gp * self.H)
 
 
     def _Lbump_changed(self):
+        self.set_mask()
+        self.update_params()
         self.setup_mesh()
         self.initial_conditions()
         if hasattr(self, 'plot'):
             self.plot.update_plotdata()
 
     def _Xbump_changed(self):
+        self.set_mask()
+        self.update_params()
         self.setup_mesh()
         self.initial_conditions()
         if hasattr(self, 'plot'):
