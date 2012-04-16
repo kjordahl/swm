@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Sun Apr 15 15:25:40 EDT 2012>
+Time-stamp: <Mon Apr 16 08:20:28 EDT 2012>
 """
 
 import time
@@ -85,10 +85,12 @@ class ShallowWaterModel(HasTraits):
         self.t = 0
 
     def _mask_shape_changed(self):
-            self.update_params()
-            self.setup_mesh()
-            self.initial_conditions()
-            self.plot.clear_plot()
+        self.set_mask()
+        self.update_params()
+        self.setup_mesh()
+        self.initial_conditions()
+        if hasattr(self, 'plot'):
+            self.plot.update_plotdata()
 
     def _running_changed(self):
         if self.running:
