@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Mon Apr 16 18:29:22 EDT 2012>
+Time-stamp: <Wed Apr 18 10:38:44 EDT 2012>
 """
 
 import time
@@ -199,11 +199,12 @@ class ShallowWaterModel(HasTraits):
         DIV = ((1 / (self.dx * self.dy)) *
                sparse.hstack([I * self.dy - IW * self.dy,
                               I * self.dx - IS * self.dx]))
-        hDIV = ((1 / (self.dx * self.dy)) *
-                sparse.hstack([self.dy * (I - IW) * self.d0(self.msk) *
-                               self.d0(IE * self.msk.flatten()),
-                               self.dx * (I - IS) *
-                               self.d0(self.msk) * self.d0(IN * self.msk.flatten())]))
+        hDIVu = ((1 / (self.dx * self.dy)) *
+                self.dy * (I - IW) * self.d0(self.msk) *
+                self.d0(IE * self.msk.flatten()))
+        hDIVv = ((1 / (self.dx * self.dy)) *
+                 self.dx * (I - IS) *
+                 self.d0(self.msk) * self.d0(IN * self.msk.flatten()))
         # GRAD for the case of no slip boundary conditions
         # DEL2 for the v points
         # GRAD that assumes that v is zero on the boundary
@@ -242,7 +243,8 @@ class ShallowWaterModel(HasTraits):
                                 sparse.hstack([self.d0(fv) * vAu,
                                                -self.Ah * DEL2v,
                                                self.gp * DY]),
-                                sparse.hstack([self.H * hDIV,
+                                sparse.hstack([self.H * hDIVu,
+                                               self.H * hDIVv,
                                                sparse.csc_matrix((n, n))])]).tocsc()
         self.IE = IE
         self.IN = IN
