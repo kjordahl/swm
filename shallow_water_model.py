@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Wed Apr 18 10:38:44 EDT 2012>
+Time-stamp: <Wed Apr 18 19:13:44 EDT 2012>
 """
 
 import time
@@ -67,13 +67,13 @@ class ShallowWaterModel(HasTraits):
                 'east-west channel',
                 'north-south channel',
                 'Lake Superior',
-                'Gulf of Mexico']
+                'Gulf of Mexico',
+                'Pacific']
 
     def initial_conditions(self):
         """Geostrophic adjustment problem
         initial condition
         """
-        #self.h0 = np.zeros(self.msk.shape)
         Xbump = self.Lx / 4
         Ybump = self.Ly / 4
         Lbump = 1000.0
@@ -117,7 +117,7 @@ class ShallowWaterModel(HasTraits):
         """update calculated parameters"""
         self.dx = 1.0 * self.Lx / self.nx
         self.dy = 1.0 * self.Ly / self.ny
-        self.phi0 = pi * self.lat / 180            # reference latitude (radians)
+        self.phi0 = pi * self.lat / 180           # reference latitude (radians)
         self.gp = 10.0
         self.cg = sqrt(self.gp * self.H)
 
@@ -166,16 +166,25 @@ class ShallowWaterModel(HasTraits):
             z = n.variables['z']
             self.msk = z.data
         elif self.mask_shape == 'Gulf of Mexico':
-            self.nx = 201
-            self.ny = 131
+            self.load_grid('gulf')
             self.Lx = 2000e3
             self.Ly = 1300e3
             self.lat = 25
             self.H = 1600
-            n = netcdf_file('gulf_mask.grd', 'r')
-            z = n.variables['z']
-            self.msk = z.data
+        elif self.mask_shape == 'Pacific':
+            self.load_grid('pacific')
+            self.lat = 10               # doesn't work right at equator?
+            self.Lx = 2000e3
+            self.Ly = 2500e3
+            self.H = 1000
 
+    def load_grid(self, name):
+        """Load boundary conditions from a netcdf (GMT) grid file"""
+        n = netcdf_file(name + '.grd', 'r')
+        z = n.variables['z']
+        self.msk = np.ones(z.data.shape)
+        self.msk[z.data==0] = 0
+        self.ny, self.nx = z.data.shape
 
     def operators(self):
         """Define differential operators

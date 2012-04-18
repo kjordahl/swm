@@ -40,6 +40,8 @@ OceanView(MainWindow):
             ToggleButton:
                 text << model.run_text
                 checked := model.running
+            Label:
+                text << '%6.1f s' % model.t
         EnableCanvas:
             id: plot_window
             component = plot.get_plot_component()
