@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Wed Apr 18 19:13:44 EDT 2012>
+Time-stamp: <Fri Apr 20 08:10:33 EDT 2012>
 """
 
 import time
@@ -13,7 +13,7 @@ import threading
 import numpy as np
 from numpy import pi, sin, cos, sqrt, exp
 from traits.api import (HasTraits, Int, Float, Bool, Enum, Str,
-                        List, Range)
+                        List, Range, Array)
 from chaco.api import Plot, ArrayPlotData, TransformColorMapper, jet
 from scipy import sparse
 from scipy.sparse import linalg
@@ -37,11 +37,12 @@ class ShallowWaterModel(HasTraits):
     Lx = Float(1000e3)      # (m) East-West domain size
     Ly = Float(1000e3)      # (m) North-South domain size
     lat = Range(low=-90, high=90, value=0)  # (degrees) Reference latitude
-    H = Int(100)            # (m) reference thickness
+    H0 = Int(100)            # (m) reference thickness
     wind_x = Float(0)
     wind_y = Float(0)
     f0 = Float(0)
     beta = Float(0)
+    H = Array               # depth grid
     # model
     mask_list = List(Str)
     mask_shape = Enum(values='mask_list')
@@ -119,7 +120,7 @@ class ShallowWaterModel(HasTraits):
         self.dy = 1.0 * self.Ly / self.ny
         self.phi0 = pi * self.lat / 180           # reference latitude (radians)
         self.gp = 10.0
-        self.cg = sqrt(self.gp * self.H)
+        self.cg = sqrt(self.gp * self.H0)
 
     def setup_mesh(self):
         self.set_mask()
@@ -149,19 +150,22 @@ class ShallowWaterModel(HasTraits):
         if self.mask_shape == 'rectangular':
             self.msk[:,-1] = 0
             self.msk[-1,:] = 0
+            self.H = self.H0 * np.ones(self.msk.shape)
         elif self.mask_shape == 'east-west channel':
             self.msk[-1,:] = 0
+            self.H = self.H0 * np.ones(self.msk.shape)
         elif self.mask_shape == 'north-south channel':
             self.msk[:,-1] = 0
+            self.H = self.H0 * np.ones(self.msk.shape)
         elif self.mask_shape == 'periodic':
-            pass
+            self.H = self.H0 * np.ones(self.msk.shape)
         elif self.mask_shape == 'Lake Superior':
             self.nx = 151
             self.ny = 151
             self.Lx = 600e3
             self.Ly = 600e3
             self.lat = 43                   # Latitude of Lake Superior
-            self.H = 150
+            self.H0 = 150
             n = netcdf_file('superior_mask.grd', 'r')
             z = n.variables['z']
             self.msk = z.data
@@ -170,18 +174,19 @@ class ShallowWaterModel(HasTraits):
             self.Lx = 2000e3
             self.Ly = 1300e3
             self.lat = 25
-            self.H = 1600
+            self.H0 = 1600
         elif self.mask_shape == 'Pacific':
             self.load_grid('pacific')
             self.lat = 10               # doesn't work right at equator?
             self.Lx = 2000e3
             self.Ly = 2500e3
-            self.H = 1000
+            self.H0 = 1000
 
     def load_grid(self, name):
         """Load boundary conditions from a netcdf (GMT) grid file"""
         n = netcdf_file(name + '.grd', 'r')
         z = n.variables['z']
+        self.H = z.data
         self.msk = np.ones(z.data.shape)
         self.msk[z.data==0] = 0
         self.ny, self.nx = z.data.shape
@@ -252,8 +257,8 @@ class ShallowWaterModel(HasTraits):
                                 sparse.hstack([self.d0(fv) * vAu,
                                                -self.Ah * DEL2v,
                                                self.gp * DY]),
-                                sparse.hstack([self.H * hDIVu,
-                                               self.H * hDIVv,
+                                sparse.hstack([self.H0 * hDIVu,
+                                               self.H0 * hDIVv,
                                                sparse.csc_matrix((n, n))])]).tocsc()
         self.IE = IE
         self.IN = IN
@@ -317,8 +322,8 @@ class ShallowWaterModel(HasTraits):
         theta = np.arctan2(self.wind_y, self.wind_x)
         tau_x = tau * cos(theta) * np.ones(self.Xu.shape)
         tau_y = tau * sin(theta) * np.ones(self.Yu.shape)
-        F = np.hstack([tau_x.flatten() / (self.rho0 * self.H),
-                          tau_y.flatten() / (self.rho0 * self.H),
+        F = np.hstack([tau_x.flatten() / (self.rho0 * self.H0),
+                          tau_y.flatten() / (self.rho0 * self.H0),
                           b.flatten()])
         return F[self.ikeep]
 

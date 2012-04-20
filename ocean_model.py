@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Wed Apr 18 19:13:26 EDT 2012>
+Time-stamp: <Thu Apr 19 17:00:19 EDT 2012>
 """
 
 import time
@@ -35,7 +35,7 @@ class OceanModel(ShallowWaterModel):
     Lbump = Range(low=0.0, high=10.0, value=1.0)  # size of bump (relative to Rd)
     L0 = Float(100)                               # height of bump
     lat = Range(low=-90, high=90, value=30)       # (degrees) Reference latitude
-    H = Int(600)            # (m) reference thickness
+    H0 = Int(600)            # (m) reference thickness
     wind_x = Float(0)
 
     def __init__(self):
@@ -64,11 +64,11 @@ class OceanModel(ShallowWaterModel):
         self.beta = (2 * self.Omega / self.a) * cos(self.phi0) # (1/(ms))
         if self.f0 == 0:
             self.Ah = 0.01 * self.dx**2 / 8.64e4
-            self.gp = self.Rd**2 * self.beta / self.H # (m/s^2) reduced gravity
+            self.gp = self.Rd**2 * self.beta / self.H0 # (m/s^2) reduced gravity
         else:
             self.Ah = 0.01 * self.dx**2 / (2*pi/self.f0)
-            self.gp = (self.f0 * self.Rd)**2 / self.H # (m/s^2) reduced gravity
-        self.cg = sqrt(self.gp * self.H)
+            self.gp = (self.f0 * self.Rd)**2 / self.H0 # (m/s^2) reduced gravity
+        self.cg = sqrt(self.gp * self.H0)
 
 
     def _Lbump_changed(self):
