@@ -3,6 +3,7 @@ from enaml.stdlib.fields import IntField
 StormView(MainWindow):
     attr model
     attr plot
+    closed :: model.stop()
     title = "Storm Surge Model"
     Container:
         constraints = [

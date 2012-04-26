@@ -3,6 +3,7 @@ from enaml.stdlib.fields import IntField
 WindView(MainWindow):
     attr model
     attr plot
+    closed :: model.stop()
     title = "Shallow Water Model"
     Container:
         constraints = [
