@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri May  4 08:03:07 EDT 2012>
+Time-stamp: <Fri May  4 11:49:13 EDT 2012>
 """
 
 from scipy.io.netcdf import netcdf_file
@@ -25,6 +25,7 @@ class TsunamiModel(ShallowWaterModel):
 
     try on a flat (Mercatorized) Pacific
     """
+    roughness = 0.3         # meters ** (-1/3) Manning roughness coefficient
 
     def __init__(self):
         self.nx = 101
@@ -34,9 +35,14 @@ class TsunamiModel(ShallowWaterModel):
         self.mask_shape = 'Gulf of Mexico'
         super(TsunamiModel, self).__init__()
 
+    def _mask_list_default(self):
+        return ['Gulf of Mexico',
+                'Pacific']
+
     def initial_conditions(self):
         """Tsunami initial condition
         """
+        self.Cf = self.g * self.roughness ** 2 / self.H ** (1/3)
         Xbump = self.Lx / 2
         Ybump = self.Ly / 2
         Lbump = 1000.0
@@ -128,11 +134,26 @@ class TsunamiModel(ShallowWaterModel):
         self.IE = IE
         self.IN = IN
 
+    def body_forces(self):
+        """Apply bottom friction as body force"""
+        # translate U and V to the H grid
+        Uh = (self.U + np.roll(self.U, -1, 1)) / 2
+        Vh = (self.V + np.roll(self.V, -1, 0)) / 2
+        b = np.zeros(self.Xh.shape)          # bouyancy term
+        factor = self.Cf * sqrt(Uh ** 2 + Vh ** 2) / self.H
+        tau_x = - Uh * factor
+        tau_y = - Vh * factor
+        F = np.hstack([tau_x.flatten(),
+                       tau_y.flatten(),
+                       b.flatten()])
+        return F[self.ikeep]
+
+
     def time_step(self):
         """Update state vector and height and velocity fields at each time step
-        No body forces
         """
-        self.s = self.solve(self.B * self.s)
+        F = self.body_forces()
+        self.s = self.solve(self.B * self.s + self.dt * F)
         self.sbig[self.ikeep] = self.s
         self.u[self.iu] = self.sbig[self.iubig]
         self.v[self.iv] = self.sbig[self.ivbig]
