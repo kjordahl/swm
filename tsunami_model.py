@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Thu May  3 22:52:09 EDT 2012>
+Time-stamp: <Fri May  4 08:03:07 EDT 2012>
 """
 
 from scipy.io.netcdf import netcdf_file
@@ -70,9 +70,11 @@ class TsunamiModel(ShallowWaterModel):
         DIV = ((1 / (self.dx * self.dy)) *
                sparse.hstack([I * self.dy - IW * self.dy,
                               I * self.dx - IS * self.dx]))
-        hDIVu = ((I - IW) * self.d0(self.H) *
+        Hu = (self.H + np.roll(self.H, 1, 1)) / 2
+        hDIVu = ((I - IW) * self.d0(Hu) *
                 self.d0(IE * self.msk.flatten())) / self.dx
-        hDIVv = ((I - IS) * self.d0(self.H) *
+        Hv = (self.H + np.roll(self.H, 1, 0)) / 2
+        hDIVv = ((I - IS) * self.d0(Hv) *
                  self.d0(IN * self.msk.flatten())) / self.dy
         ix = range(self.nx)
         ix.append(0)
