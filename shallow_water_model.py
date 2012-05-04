@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Thu May  3 22:41:32 EDT 2012>
+Time-stamp: <Fri May  4 11:57:48 EDT 2012>
 """
 
 import time
@@ -178,8 +178,8 @@ class ShallowWaterModel(HasTraits):
         elif self.mask_shape == 'Pacific':
             self.load_grid('pacific')
             self.lat = 10               # doesn't work right at equator?
-            self.Lx = 2000e3
-            self.Ly = 2500e3
+            self.Lx = 20000e3
+            self.Ly = 25000e3
             self.H0 = 1000
 
     def load_grid(self, name):
