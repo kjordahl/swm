@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri Apr 20 08:10:33 EDT 2012>
+Time-stamp: <Thu May  3 22:41:32 EDT 2012>
 """
 
 import time
@@ -213,12 +213,10 @@ class ShallowWaterModel(HasTraits):
         DIV = ((1 / (self.dx * self.dy)) *
                sparse.hstack([I * self.dy - IW * self.dy,
                               I * self.dx - IS * self.dx]))
-        hDIVu = ((1 / (self.dx * self.dy)) *
-                self.dy * (I - IW) * self.d0(self.msk) *
-                self.d0(IE * self.msk.flatten()))
-        hDIVv = ((1 / (self.dx * self.dy)) *
-                 self.dx * (I - IS) *
-                 self.d0(self.msk) * self.d0(IN * self.msk.flatten()))
+        hDIVu = ((I - IW) * self.d0(self.msk) *
+                self.d0(IE * self.msk.flatten())) / self.dx
+        hDIVv = ((I - IS) * self.d0(self.msk) *
+                 self.d0(IN * self.msk.flatten())) / self.dy
         # GRAD for the case of no slip boundary conditions
         # DEL2 for the v points
         # GRAD that assumes that v is zero on the boundary
