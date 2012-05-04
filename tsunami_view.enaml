@@ -1,0 +1,31 @@
+from enaml.stdlib.fields import IntField
+
+TsunamiView(MainWindow):
+    attr model
+    attr plot
+    closed :: model.stop()
+    title = "Tsunami Model"
+    Container:
+        constraints = [
+            hbox(plot_window, controls),
+            align('top', plot_window, controls),
+            plot_window.height >= 600,
+            plot_window.width >= 600,
+        ]
+        GroupBox:
+            id: controls
+            title = "controls"
+            Label:
+                text = "Boundaries"
+            ComboBox:
+                id: mask
+                items = model.mask_list
+                value := model.mask_shape
+            ToggleButton:
+                text << model.run_text
+                checked := model.running
+            Label:
+                text << '%6.1f s' % model.t
+        EnableCanvas:
+            id: plot_window
+            component = plot.get_plot_component()
