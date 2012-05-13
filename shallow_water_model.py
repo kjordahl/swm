@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri May  4 11:57:48 EDT 2012>
+Time-stamp: <Sun May 13 16:04:36 EDT 2012>
 """
 
 import time
@@ -186,10 +186,11 @@ class ShallowWaterModel(HasTraits):
         """Load boundary conditions from a netcdf (GMT) grid file"""
         n = netcdf_file(name + '.grd', 'r')
         z = n.variables['z']
-        self.H = z.data
-        self.msk = np.ones(z.data.shape)
-        self.msk[z.data==0] = 0
-        self.ny, self.nx = z.data.shape
+        self.H = np.array(z.data)
+        self.H[self.H < 1.0] = 0
+        self.msk = np.ones(self.H.shape)
+        self.msk[self.H==0] = 0
+        self.ny, self.nx = self.H.shape
 
     def operators(self):
         """Define differential operators
