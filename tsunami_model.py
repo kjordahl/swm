@@ -5,7 +5,7 @@ based Matlab code by: Francois Primeau UC Irvine 2011
 
 Kelsey Jordahl
 kjordahl@enthought.com
-Time-stamp: <Fri May  4 11:49:13 EDT 2012>
+Time-stamp: <Sun May 13 16:33:13 EDT 2012>
 """
 
 from scipy.io.netcdf import netcdf_file
@@ -26,6 +26,7 @@ class TsunamiModel(ShallowWaterModel):
     try on a flat (Mercatorized) Pacific
     """
     roughness = 0.3         # meters ** (-1/3) Manning roughness coefficient
+    eps = 100.0             # meters (desingularize velocities as depth less than eps)
 
     def __init__(self):
         self.nx = 101
@@ -38,6 +39,17 @@ class TsunamiModel(ShallowWaterModel):
     def _mask_list_default(self):
         return ['Gulf of Mexico',
                 'Pacific']
+
+    def update_params(self):
+        super(TsunamiModel, self).update_params()
+        #self.eps = 0.01 * min(self.dx, self.dy) ** 4
+
+    def initialize_matrix(self):
+        super(TsunamiModel, self).initialize_matrix()
+        corrbig = np.hstack([self.ucorr.flatten(),
+                             self.vcorr.flatten(),
+                             np.ones(self.h0.shape).flatten()])
+        self.corr = corrbig[self.ikeep]
 
     def initial_conditions(self):
         """Tsunami initial condition
@@ -77,9 +89,12 @@ class TsunamiModel(ShallowWaterModel):
                sparse.hstack([I * self.dy - IW * self.dy,
                               I * self.dx - IS * self.dx]))
         Hu = (self.H + np.roll(self.H, 1, 1)) / 2
+        self.ucorr = np.sqrt(2) * Hu ** 2 / np.sqrt(Hu ** 4 + np.maximum(self.eps, Hu ** 4))
         hDIVu = ((I - IW) * self.d0(Hu) *
                 self.d0(IE * self.msk.flatten())) / self.dx
         Hv = (self.H + np.roll(self.H, 1, 0)) / 2
+        self.vcorr = np.sqrt(2) * Hv ** 2 / np.sqrt(Hv ** 4 + np.maximum(self.eps, Hv ** 4))
+
         hDIVv = ((I - IS) * self.d0(Hv) *
                  self.d0(IN * self.msk.flatten())) / self.dy
         ix = range(self.nx)
@@ -120,7 +135,6 @@ class TsunamiModel(ShallowWaterModel):
                                self.h0.flatten()])
         fu = self.f0 + self.beta * self.Yu * 0
         fv = self.f0 + self.beta * self.Yv * 0
-
         # Linear swm operator
         self.L = sparse.vstack([sparse.hstack([-self.Ah * DEL2u,
                                                -self.d0(fu) * uAv,
@@ -153,7 +167,7 @@ class TsunamiModel(ShallowWaterModel):
         """Update state vector and height and velocity fields at each time step
         """
         F = self.body_forces()
-        self.s = self.solve(self.B * self.s + self.dt * F)
+        self.s = self.solve(self.B * self.s + self.dt * F) * self.corr
         self.sbig[self.ikeep] = self.s
         self.u[self.iu] = self.sbig[self.iubig]
         self.v[self.iv] = self.sbig[self.ivbig]
